@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>To-Do List</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <h1>To-Do List</h1>
+        
+        <div class="task-input-container">
+            <input type="text" id="taskInput" placeholder="Enter a new task...">
+            <button id="addTaskButton">Add Task</button>
+        </div>
+        
+        <div class="sort-options">
+            <button id="sortTasks">Sort by Completion</button>
+        </div>
+        
+        <ul id="taskList"></ul>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
+/* General Body Styling */
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #f4f4f9;
+    margin: 0;
+    padding: 0;
+}
+
+.app-container {
+    max-width: 600px;
+    margin: 50px auto;
+    background-color: #ffffff;
+    padding: 20px;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+}
+
+h1 {
+    text-align: center;
+    color: #333;
+}
+
+/* Input Field and Button Styling */
+.task-input-container {
+    display: flex;
+    margin-bottom: 20px;
+}
+
+#taskInput {
+    flex: 1;
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+#addTaskButton {
+    padding: 10px 20px;
+    background-color: #4CAF50;
+    color: white;
+    font-size: 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-left: 10px;
+}
+
+#addTaskButton:hover {
+    background-color: #45a049;
+}
+
+/* Task List Styling */
+ul {
+    list-style: none;
+    padding: 0;
+}
+
+li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    margin: 5px 0;
+    background-color: #f9f9f9;
+    border-radius: 5px;
+    font-size: 18px;
+}
+
+li.completed {
+    text-decoration: line-through;
+    background-color: #d9fdd3;
+}
+
+button {
+    padding: 5px 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+button.delete {
+    background-color: #f44336;
+    color: white;
+}
+
+button.delete:hover {
+    background-color: #e53935;
+}
+
+button.complete {
+    background-color: #4CAF50;
+    color: white;
+}
+
+button.complete:hover {
+    background-color: #45a049;
+}
+
+/* Sort Button Styling */
+.sort-options {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+#sortTasks {
+    padding: 10px 20px;
+    background-color: #008CBA;
+    color: white;
+    font-size: 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+#sortTasks:hover {
+    background-color: #006f87;
+}
+// Get references to DOM elements
+const addTaskButton = document.getElementById('addTaskButton');
+const taskInput = document.getElementById('taskInput');
+const taskList = document.getElementById('taskList');
+const sortTasksButton = document.getElementById('sortTasks');
+
+// Load tasks from localStorage when the page loads
+document.addEventListener('DOMContentLoaded', loadTasks);
+
+// Function to load tasks from localStorage and render them on the page
+function loadTasks() {
+    const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+    taskList.innerHTML = '';
+    tasks.forEach(task => {
+        createTaskElement(task.id, task.text, task.completed);
+    });
+}
+
+// Function to create and append task elements to the task list
+function createTaskElement(id, text, completed) {
+    const li = document.createElement('li');
+    li.setAttribute('data-id', id);
+    if (completed) {
+        li.classList.add('completed');
+    }
+
+    li.innerHTML = `
+        <span>${text}</span>
+        <div>
+            <button class="complete" onclick="toggleTaskCompletion('${id}')">Complete</button>
+            <button class="delete" onclick="deleteTask('${id}')">Delete</button>
+        </div>
+    `;
+    taskList.appendChild(li);
+}
+
+// Add task to the task list
+addTaskButton.addEventListener('click', function() {
+    const taskText = taskInput.value.trim();
+    if (taskText) {
+        const taskId = generateTaskId();
+        const newTask = {
+            id: taskId,
+            text: taskText,
+            completed: false
+        };
+        saveTaskToLocalStorage(newTask);
+        createTaskElement(taskId, taskText, false);
+        taskInput.value = '';
+    }
+});
+
+// Function to generate a unique task ID
+function generateTaskId() {
+    return 'task-' + new Date().getTime();
+}
+
+// Function to save task to localStorage
+function saveTaskToLocalStorage(task) {
+    const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+    tasks.push(task);
+    localStorage.setItem('tasks', JSON.stringify(tasks));
+}
+
+// Function to toggle task completion status
+function toggleTaskCompletion(taskId) {
+    const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+    const taskIndex = tasks.findIndex(task => task.id === taskId);
+    if (taskIndex !== -1) {
+        tasks[taskIndex].completed = !tasks[taskIndex].completed;
+        localStorage.setItem('tasks', JSON.stringify(tasks));
+        taskList.innerHTML = '';
+        loadTasks();
+    }
+}
+
+// Function to delete a task
+function deleteTask(taskId) {
+    const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+    const updatedTasks = tasks.filter(task => task.id !== taskId);
+    localStorage.setItem('tasks', JSON.stringify(updatedTasks));
+    taskList.innerHTML = '';
+    loadTasks();
+}
+
+// Function to sort tasks by completion status
+sortTasksButton.addEventListener('click', function() {
+    const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+    tasks.sort((a, b) => a.completed - b.completed);
+    localStorage.setItem('tasks', JSON.stringify(tasks));
+    taskList.innerHTML = '';
+    loadTasks();
+});
